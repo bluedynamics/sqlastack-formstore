@@ -37,14 +37,14 @@ def test_author_defaults_to_none_anonymous(pg_registry):
 def test_list_for_is_scoped_and_newest_first(pg_registry):
     with pg_registry.session_scope("fh") as session:
         repo = FormEntryRepository(session)
-        first = repo.create(_entry())
-        second = repo.create(_entry())
+        first_id = repo.create(_entry()).id
+        second_id = repo.create(_entry()).id
         repo.create(_entry(uid="other-uid"))
 
     with pg_registry.session_scope("fh") as session:
         repo = FormEntryRepository(session)
         rows = repo.list_for("uid-1")
-        assert [r.id for r in rows] == [second.id, first.id]
+        assert [r.id for r in rows] == [second_id, first_id]
         assert repo.count_for("uid-1") == 2
         assert repo.count_for("other-uid") == 1
         assert repo.count_for("nope") == 0
@@ -53,18 +53,18 @@ def test_list_for_is_scoped_and_newest_first(pg_registry):
 def test_delete_for_is_scoped_to_uid(pg_registry):
     with pg_registry.session_scope("fh") as session:
         repo = FormEntryRepository(session)
-        mine = repo.create(_entry())
-        foreign = repo.create(_entry(uid="other-uid"))
+        mine_id = repo.create(_entry()).id
+        foreign_id = repo.create(_entry(uid="other-uid")).id
 
     with pg_registry.session_scope("fh") as session:
         repo = FormEntryRepository(session)
-        assert repo.delete_for("uid-1", foreign.id) is False  # wrong uid
-        assert repo.delete_for("uid-1", mine.id) is True
-        assert repo.delete_for("uid-1", mine.id) is False  # already gone
+        assert repo.delete_for("uid-1", foreign_id) is False  # wrong uid
+        assert repo.delete_for("uid-1", mine_id) is True
+        assert repo.delete_for("uid-1", mine_id) is False  # already gone
 
     with pg_registry.session_scope("fh") as session:
         repo = FormEntryRepository(session)
-        assert repo.get_for("other-uid", foreign.id) is not None
+        assert repo.get_for("other-uid", foreign_id) is not None
 
 
 def test_clear_for_removes_only_own_uid(pg_registry):
