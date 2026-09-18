@@ -156,10 +156,17 @@ def test_delete_and_clear(store, forms_env):
 
 def test_two_requests_no_bleed(store):
     from sqlastack.plone import close_zope_sessions
+    from sqlastack.plone import get_registry
 
     store.add(SUBMISSION)
-    transaction.abort()  # Request 1 scheitert
+    proxy = get_registry().zope_session("forms")
+    session_before = proxy.registry()
+    transaction.abort()  # Request 1 scheitert: Publisher aborted
     close_zope_sessions(None)
+
+    # Teardown muss die Thread-Session verworfen haben: Request 2 bekommt eine NEUE
+    session_after = get_registry().zope_session("forms").registry()
+    assert session_after is not session_before
 
     assert store.length() == 0
     transaction.abort()
