@@ -1,0 +1,61 @@
+[project]
+name = "sqlastack-formstore"
+version = "0.1.0.dev0"
+description = "Generic SQL form storage for Plone/Volto: IFormDataStore adapter for collective.volto.formsupport, storing submissions as JSONB."
+readme = "README.md"
+authors = [
+    {name = "Jens Klein", email = "jk@kleinundpartner.at"},
+]
+requires-python = ">=3.12"
+license = "GPL-2.0-only"
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Development Status :: 3 - Alpha",
+    "Framework :: Plone",
+    "Framework :: Plone :: 6.0",
+    "Framework :: Plone :: Addon",
+]
+dependencies = [
+    "sqlastack-core[zope]",
+    "zope.publisher",
+]
+
+[project.urls]
+Repository = "https://github.com/bluedynamics/sqlastack-formstore"
+
+[project.entry-points."plone.autoinclude.plugin"]
+target = "plone"
+module = "sqlastack.formstore"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "sqlastack-core[test]", "alembic>=1.13"]
+develop = ["sqlastack-formstore[test]", "pdbp"]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sqlastack"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+from-first = true
+lines-after-imports = 2
+no-sections = true
+
+[tool.uv.sources]
+sqlastack-core = { path = "../sqlastack-core", editable = true }
