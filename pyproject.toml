@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "sqlastack-core[zope]",
     "zope.publisher",
+    "alembic>=1.13",
 ]
 
 [project.urls]
@@ -28,9 +29,13 @@ Repository = "https://github.com/bluedynamics/sqlastack-formstore"
 target = "plone"
 module = "sqlastack.formstore"
 
+[project.scripts]
+sqlastack-formstore-migrate = "sqlastack.formstore.migrate:main"
+
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "sqlastack-core[test]", "alembic>=1.13"]
+test = ["pytest", "pytest-cov", "sqlastack-core[test]"]
 develop = ["sqlastack-formstore[test]", "pdbp"]
+plone = ["collective.volto.formsupport"]
 
 [build-system]
 requires = ["hatchling>=1.26"]

@@ -25,14 +25,17 @@ Part of the sqlastack family (built on
 
 1. Add `sqlastack-formstore` to your Plone deployment (Plone 6 / Volto with
    collective.volto.formsupport; contract verified against formsupport
-   3.3.2, source-verified 2026-09-18).
+   3.3.2, source-verified 2026-09-18). The adapter registers only when
+   collective.volto.formsupport is importable (ZCML condition), so the
+   package is safe to install ahead of it.
 2. Configure the database connection in the Zope process environment:
 
        SQLASTACK_FORMS_URL=postgresql+psycopg://user:pass@host/dbname
 
    (Optional pool tuning: `SQLASTACK_FORMS_POOL_SIZE` etc.)
-3. Create the schema: `alembic upgrade head` (run from this package, uses the
-   same `SQLASTACK_FORMS_URL`).
+3. Create the schema: run `sqlastack-formstore-migrate` (console script;
+   uses the same `SQLASTACK_FORMS_URL`). From a source checkout, `alembic
+   upgrade head` works too.
 4. Install the **sqlastack.formstore** profile (Site Setup → Add-ons).
 5. Enable *Store* on your form block — submissions now land in SQL.
 
@@ -46,5 +49,8 @@ Part of the sqlastack family (built on
 
     uv sync --extra develop
     uv run pytest    # needs Docker (testcontainers, postgres:16)
+
+Requires a sibling checkout of sqlastack-core (path dependency via
+`[tool.uv.sources]`).
 
 License: GPL-2.0-only

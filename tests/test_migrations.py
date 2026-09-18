@@ -2,20 +2,15 @@
 
 from __future__ import annotations
 
-from alembic import command
 from alembic.autogenerate import compare_metadata
-from alembic.config import Config
 from alembic.migration import MigrationContext
-from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
+from sqlastack.formstore.migrate import upgrade
 from sqlmodel import SQLModel
 import pytest
-
-
-REPO_ROOT = Path(__file__).parents[1]
 
 
 @pytest.fixture
@@ -35,9 +30,7 @@ def alembic_db_url(pg_url, monkeypatch):
 
 
 def _upgrade_head():
-    cfg = Config(str(REPO_ROOT / "alembic.ini"))
-    cfg.set_main_option("script_location", str(REPO_ROOT / "migrations"))
-    command.upgrade(cfg, "head")
+    upgrade()
 
 
 def test_upgrade_head_creates_table_and_index(alembic_db_url):

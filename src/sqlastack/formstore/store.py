@@ -80,9 +80,12 @@ class SQLFormDataStore:
         raw = self.request.get("BODY") if hasattr(self.request, "get") else None
         if raw:
             try:
-                return json.loads(raw)
+                result = json.loads(raw)
             except (TypeError, ValueError):
                 pass
+            else:
+                if isinstance(result, dict):
+                    return result
         return dict(getattr(self.request, "form", None) or {})
 
     @property

@@ -1,6 +1,7 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     i18n_domain="sqlastack.formstore">
 
   <genericsetup:registerProfile
@@ -16,6 +17,7 @@
       provides="collective.volto.formsupport.interfaces.IFormDataStore"
       for="plone.dexterity.interfaces.IDexterityContent
            .interfaces.ISqlastackFormstoreLayer"
+      zcml:condition="installed collective.volto.formsupport"
       />
 
   <subscriber
