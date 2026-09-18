@@ -1,0 +1,30 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="sqlastack.formstore">
+
+  <genericsetup:registerProfile
+      name="default"
+      title="sqlastack.formstore"
+      directory="profiles/default"
+      description="Store collective.volto.formsupport submissions in SQL (JSONB)."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      />
+
+  <adapter
+      factory=".store.SQLFormDataStore"
+      provides="collective.volto.formsupport.interfaces.IFormDataStore"
+      for="plone.dexterity.interfaces.IDexterityContent
+           .interfaces.ISqlastackFormstoreLayer"
+      />
+
+  <subscriber
+      for="ZPublisher.interfaces.IPubSuccess"
+      handler="sqlastack.plone.close_zope_sessions"
+      />
+  <subscriber
+      for="ZPublisher.interfaces.IPubFailure"
+      handler="sqlastack.plone.close_zope_sessions"
+      />
+
+</configure>
