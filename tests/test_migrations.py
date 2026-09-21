@@ -53,9 +53,7 @@ def test_migrations_in_sync_with_model(alembic_db_url):
 
     engine = create_engine(alembic_db_url)
     with engine.connect() as conn:
-        ctx = MigrationContext.configure(
-            conn, opts={"include_object": include_object}
-        )
+        ctx = MigrationContext.configure(conn, opts={"include_object": include_object})
         diffs = compare_metadata(ctx, SQLModel.metadata)
     engine.dispose()
     assert diffs == [], f"model and migrations diverged: {diffs}"

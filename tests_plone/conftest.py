@@ -80,8 +80,6 @@ def form_entries():
 
         with get_registry().session_scope("forms") as session:
             entries = session.scalars(select(FormEntry)).all()
-            return [
-                (e.plone_uid, e.block_id, e.author, dict(e.data)) for e in entries
-            ]
+            return [(e.plone_uid, e.block_id, e.author, dict(e.data)) for e in entries]
 
     return _rows

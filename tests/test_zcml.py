@@ -39,4 +39,7 @@ def test_our_dotted_names_in_zcml_resolve():
 def test_browserlayer_points_to_our_interface():
     tree = ET.parse(PKG / "profiles" / "default" / "browserlayer.xml")
     layer = tree.getroot().find("layer")
-    assert layer.get("interface") == "sqlastack.formstore.interfaces.ISqlastackFormstoreLayer"
+    assert (
+        layer.get("interface")
+        == "sqlastack.formstore.interfaces.ISqlastackFormstoreLayer"
+    )

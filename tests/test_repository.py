@@ -7,8 +7,12 @@ from sqlastack.formstore.repository import FormEntryRepository
 
 
 def _entry(uid="uid-1", block="form-1", **kw):
-    payload = {"name": "Jane", "fields_labels": {"name": "Name"},
-               "fields_order": ["name"], "fields_types": {"name": "text"}}
+    payload = {
+        "name": "Jane",
+        "fields_labels": {"name": "Name"},
+        "fields_order": ["name"],
+        "fields_types": {"name": "text"},
+    }
     return FormEntry(plone_uid=uid, block_id=block, data=payload, **kw)
 
 
