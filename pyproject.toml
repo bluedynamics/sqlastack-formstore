@@ -34,6 +34,13 @@ sqlastack-formstore-migrate = "sqlastack.formstore.migrate:main"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "sqlastack-core[test]"]
+test-plone = [
+    "sqlastack-formstore[test]",
+    "collective.volto.formsupport[test]==3.3.2",
+    "Products.CMFPlone",
+    "plone.app.testing",
+    "pytest-plone>=1.1.0",
+]
 develop = ["sqlastack-formstore[test]", "pdbp"]
 plone = ["collective.volto.formsupport"]
 
