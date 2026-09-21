@@ -50,6 +50,15 @@ Part of the sqlastack family (built on
     uv sync --extra develop
     uv run pytest    # needs Docker (testcontainers, postgres:16)
 
+### Plone integration tests
+
+Real end-to-end tests (ZCML load, GS profile, adapter override, `@submit-form`
+through the actual publisher into PostgreSQL) live in `tests_plone/` and are
+not part of the default test run — they boot a full Plone site:
+
+    uv sync --extra develop --extra test-plone
+    uv run pytest tests_plone/    # slow: needs Docker + boots Plone
+
 Requires a sibling checkout of sqlastack-core (path dependency via
 `[tool.uv.sources]`).
 
