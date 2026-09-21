@@ -27,6 +27,49 @@ def forms_env(pg_url, pg_engine, monkeypatch):
 
 
 @pytest.fixture
+def form_document(functional):
+    from plone import api
+    from plone.app.testing import TEST_USER_ID
+    from plone.app.testing import setRoles
+    from testdata import FORM_BLOCKS
+    import transaction
+
+    portal = functional["portal"]
+    setRoles(portal, TEST_USER_ID, ["Manager"])
+    doc = api.content.create(type="Document", title="Form page", container=portal)
+    doc.blocks = dict(FORM_BLOCKS)
+    # anonyme Submits brauchen View — Formularseiten sind real publiziert
+    api.content.transition(obj=doc, transition="publish")
+    transaction.commit()
+    return doc.absolute_url(), doc.UID()
+
+
+@pytest.fixture
+def anon_session(functional):
+    from plone.restapi.testing import RelativeSession
+
+    portal_url = functional["portal"].absolute_url()
+    session = RelativeSession(portal_url)
+    session.headers.update({"Accept": "application/json"})
+    yield session
+    session.close()
+
+
+@pytest.fixture
+def manager_session(functional):
+    from plone.app.testing import SITE_OWNER_NAME
+    from plone.app.testing import SITE_OWNER_PASSWORD
+    from plone.restapi.testing import RelativeSession
+
+    portal_url = functional["portal"].absolute_url()
+    session = RelativeSession(portal_url)
+    session.headers.update({"Accept": "application/json"})
+    session.auth = (SITE_OWNER_NAME, SITE_OWNER_PASSWORD)
+    yield session
+    session.close()
+
+
+@pytest.fixture
 def form_entries():
     """Return all stored FormEntry rows as plain tuples (standalone session)."""
 
