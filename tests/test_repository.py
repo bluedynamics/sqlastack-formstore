@@ -7,13 +7,15 @@ from sqlastack.formstore.repository import FormEntryRepository
 
 
 def _entry(uid="uid-1", block="form-1", **kw):
-    payload = {
-        "name": "Jane",
-        "fields_labels": {"name": "Name"},
-        "fields_order": ["name"],
-        "fields_types": {"name": "text"},
-    }
-    return FormEntry(plone_uid=uid, block_id=block, data=payload, **kw)
+    return FormEntry(
+        plone_uid=uid,
+        block_id=block,
+        data={"name": "Jane"},
+        fields_labels={"name": "Name"},
+        fields_order=["name"],
+        fields_types={"name": "text"},
+        **kw,
+    )
 
 
 def test_create_persists_jsonb_and_timestamps(pg_registry):
@@ -26,8 +28,10 @@ def test_create_persists_jsonb_and_timestamps(pg_registry):
         repo = FormEntryRepository(session)
         rows = repo.list_for("uid-1")
         assert len(rows) == 1
-        assert rows[0].data["name"] == "Jane"
-        assert rows[0].data["fields_order"] == ["name"]
+        assert rows[0].data == {"name": "Jane"}  # nur noch Feldwerte
+        assert rows[0].fields_order == ["name"]
+        assert rows[0].fields_labels == {"name": "Name"}
+        assert rows[0].fields_types == {"name": "text"}
         assert rows[0].author == "michi"
         assert rows[0].created_at.tzinfo is not None
 

@@ -12,16 +12,16 @@ def test_anonymous_submit_persists_row(form_document, anon_session, form_entries
 
     rows = form_entries()
     assert len(rows) == 1
-    plone_uid, block_id, author, data = rows[0]
-    assert plone_uid == uid
-    assert block_id == "form-id"
-    assert author is None  # anonym
-    assert data["message"] == "just want to say hi"
-    assert data["name"] == "John"
-    assert "sneaky" not in data  # nicht im Schema
-    assert "cv" not in data  # Attachment übersprungen
-    assert data["fields_labels"] == {"message": "Message", "name": "Name"}
-    assert data["fields_order"] == ["message", "name"]
+    row = rows[0]
+    assert row["plone_uid"] == uid
+    assert row["block_id"] == "form-id"
+    assert row["author"] is None  # anonym
+    assert row["data"] == {
+        "message": "just want to say hi",
+        "name": "John",
+    }  # NUR Feldwerte: sneaky (nicht im Schema) und cv (Attachment) fehlen
+    assert row["fields_labels"] == {"message": "Message", "name": "Name"}
+    assert row["fields_order"] == ["message", "name"]
 
 
 def test_authenticated_submit_records_author(
@@ -35,7 +35,7 @@ def test_authenticated_submit_records_author(
 
     rows = form_entries()
     assert len(rows) == 1
-    assert rows[0][2] == SITE_OWNER_NAME  # author, echter AccessControl-Pfad
+    assert rows[0]["author"] == SITE_OWNER_NAME  # echter AccessControl-Pfad
 
 
 def test_unknown_block_stores_nothing(form_document, anon_session, form_entries):

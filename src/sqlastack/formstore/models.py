@@ -13,10 +13,13 @@ from sqlmodel import SQLModel
 class FormEntry(TimestampMixin, SQLModel, table=True):
     """One stored form submission.
 
-    ``data`` holds the field values plus the soup-store-compatible metadata
-    keys ``fields_labels``/``fields_order``/``fields_types`` (spec §5) —
-    everything formsupport's listing/CSV endpoints expect in ``record.attrs``
-    except ``block_id`` and ``date``, which live as real columns.
+    ``data`` holds ONLY the submitted field values (field_id -> value). The
+    per-submission schema snapshot lives in its own columns:
+    ``fields_labels``/``fields_types``/``fields_order`` — snapshots, because
+    the form definition can change over time and even the submitted field
+    subset varies per submission. The formsupport read contract (soup-style
+    ``record.attrs``) is reassembled from all of these plus ``block_id`` and
+    ``created_at`` in ``store.SQLRecord``.
     """
 
     __tablename__ = "formstore_entry"
@@ -27,3 +30,6 @@ class FormEntry(TimestampMixin, SQLModel, table=True):
     block_id: str = Field(max_length=64)
     author: str | None = Field(default=None, max_length=255)
     data: dict = Field(sa_type=JSONB)
+    fields_labels: dict = Field(sa_type=JSONB)
+    fields_types: dict = Field(sa_type=JSONB)
+    fields_order: list = Field(sa_type=JSONB)

@@ -78,4 +78,4 @@ def test_clear_removes_only_this_documents_data(
 
     remaining = form_entries()
     assert len(remaining) == 1
-    assert remaining[0][0] == other.UID()  # nur das andere Dokument bleibt
+    assert remaining[0]["plone_uid"] == other.UID()  # nur das andere Dokument bleibt

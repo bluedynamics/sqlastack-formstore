@@ -57,3 +57,43 @@ def test_migrations_in_sync_with_model(alembic_db_url):
         diffs = compare_metadata(ctx, SQLModel.metadata)
     engine.dispose()
     assert diffs == [], f"model and migrations diverged: {diffs}"
+
+
+def test_upgrade_migrates_legacy_meta_keys(alembic_db_url):
+    """0002-Backfill: Meta-Keys wandern aus data in eigene Spalten."""
+    from sqlastack.formstore.migrate import upgrade
+
+    upgrade("0001")
+    engine = create_engine(alembic_db_url)
+    legacy = {
+        "msg": "hello",
+        "fields_labels": {"msg": "Message"},
+        "fields_order": ["msg"],
+        "fields_types": {"msg": "text"},
+    }
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO formstore_entry"
+                " (plone_uid, block_id, author, data)"
+                " VALUES ('uid-legacy', 'form-1', NULL, (:data)::jsonb)"
+            ),
+            {"data": __import__("json").dumps(legacy)},
+        )
+    upgrade("head")
+    with engine.begin() as conn:
+        row = (
+            conn.execute(
+                text(
+                    "SELECT data, fields_labels, fields_order, fields_types"
+                    " FROM formstore_entry WHERE plone_uid = 'uid-legacy'"
+                )
+            )
+            .mappings()
+            .one()
+        )
+    engine.dispose()
+    assert row["data"] == {"msg": "hello"}  # Meta-Keys entfernt
+    assert row["fields_labels"] == {"msg": "Message"}
+    assert row["fields_order"] == ["msg"]
+    assert row["fields_types"] == {"msg": "text"}

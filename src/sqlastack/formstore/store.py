@@ -51,6 +51,9 @@ class SQLRecord:
 
     def __init__(self, entry: FormEntry) -> None:
         attrs = dict(entry.data)
+        attrs["fields_labels"] = dict(entry.fields_labels)
+        attrs["fields_order"] = list(entry.fields_order)
+        attrs["fields_types"] = dict(entry.fields_types)
         attrs["block_id"] = entry.block_id
         attrs["date"] = entry.created_at.astimezone().replace(tzinfo=None)
         self.attrs = attrs
@@ -160,16 +163,15 @@ class SQLFormDataStore:
             labels[field_id] = field["label"]
             types[field_id] = field["type"]
             order.append(field_id)
-        payload["fields_labels"] = labels
-        payload["fields_order"] = order
-        payload["fields_types"] = types
-
         entry = self._repository().create(
             FormEntry(
                 plone_uid=self.context.UID(),
                 block_id=self.block_id,
                 author=self._current_userid(),
                 data=payload,
+                fields_labels=labels,
+                fields_types=types,
+                fields_order=order,
             )
         )
         return entry.id
