@@ -37,7 +37,11 @@ services:
     environment:
       SITE: Plone
       TYPE: volto
-      ADDONS: "collective.volto.formsupport==3.3.2 sqlastack-formstore psycopg[binary]"
+      # ohne mindestens eine CORS_-Variable generiert das Image KEINE CORS-Policy
+      CORS_ALLOW_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000"
+      # unsichtbares Honeypot-Feld als Captcha-Provider (volto-form-block verlangt einen)
+      HONEYPOT_FIELD: "protected_1"
+      ADDONS: "collective.volto.formsupport[honeypot]==3.3.2 sqlastack-formstore psycopg[binary]"
       PROFILES: "collective.volto.formsupport:default,sqlastack.formstore:default"
       PIP_PARAMS: "--extra-index-url https://test.pypi.org/simple/"
       SQLASTACK_FORMS_URL: "postgresql+psycopg://formstore:formstore@db:5432/formstore"

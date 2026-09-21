@@ -20,12 +20,30 @@ and both add-ons installed.
 ## Click through
 
 1. <http://localhost:3000> → log in (admin/admin).
-2. Add a page → add a **Form** block → add some fields → in the block sidebar
-   enable **Store compiled data**  → publish the page.
-3. Open the page (or a private window for an anonymous submit) → fill →
-   submit.
-4. Data: block sidebar shows the stored records (CSV export, clear) — and in
-   SQL: `psql postgresql://formstore:formstore@localhost:5433/formstore -c
-   'TABLE formstore_entry;'`
+2. Add a page → add a **Form** block. In the block sidebar:
+   - fill **Recipients** and **Mail subject** (required by the block even for
+     store-only forms),
+   - pick **Captcha provider: Honeypot Support** (volto-form-block treats a
+     captcha as required config; the stack ships the invisible honeypot via
+     `HONEYPOT_FIELD` + the `[honeypot]` extra),
+   - enable **Store compiled data**,
+   - disable **Send email to recipient** (no mail host in this stack).
+   The form stays hidden in view mode until this config is complete.
+3. Save → publish the page (anonymous submits need a published page).
+4. Open the page (private window for an anonymous submit) → fill → submit →
+   "Sent!".
+5. Data in SQL (`author` is the login, NULL for anonymous):
+
+       psql postgresql://formstore:formstore@localhost:5433/formstore \
+         -c 'TABLE formstore_entry;'
 
 `make clean` resets everything including the database.
+
+## Notes
+
+- The frontend is a pnpm workspace around a Volto 19.4.1 core checkout
+  (mrs-developer). `pnpm-workspace.yaml` carries the catalog generated from
+  `core/catalog.json`, and `package.json` mirrors Volto's root pnpm settings
+  (patchedDependencies etc.) — both are pinned to the core tag.
+- `packages/formstore-demo-policy` re-registers the `reactDnd` lazy libs that
+  Volto 19 removed but volto-subblocks still needs.

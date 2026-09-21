@@ -1,0 +1,11 @@
+{
+  "name": "formstore-demo-policy",
+  "version": "1.0.0",
+  "description": "Demo policy addon: re-registers lazy libs needed by volto-subblocks on Volto 19",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "react-dnd": "5.0.0",
+    "react-dnd-html5-backend": "5.0.1"
+  }
+}
