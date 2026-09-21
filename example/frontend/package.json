@@ -1,0 +1,31 @@
+{
+  "name": "formstore-demo",
+  "version": "1.0.0",
+  "description": "Volto frontend for trying out sqlastack-formstore (form block included)",
+  "private": true,
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "start": "pnpm build:deps && VOLTOCONFIG=$(pwd)/volto.config.js pnpm --filter @plone/volto start",
+    "build:deps": "pnpm --filter @plone/registry --filter @plone/components build"
+  },
+  "dependencies": {
+    "@plone/volto": "workspace:*",
+    "@plone/registry": "workspace:*",
+    "volto-form-block": "3.19.0",
+    "volto-subblocks": "^2.1.0"
+  },
+  "devDependencies": {
+    "mrs-developer": "^2.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+      "react-refresh": "^0.14.2"
+    },
+    "onlyBuiltDependencies": [
+      "cypress",
+      "lightningcss-cli"
+    ]
+  },
+  "packageManager": "pnpm@10.33.0"
+}

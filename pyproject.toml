@@ -48,6 +48,9 @@ plone = ["collective.volto.formsupport"]
 requires = ["hatchling>=1.26", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["example/"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/sqlastack"]
 
