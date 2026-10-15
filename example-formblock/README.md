@@ -24,6 +24,9 @@ and both add-ons installed.
 
 ## Click through
 
+0. One-time: set a site e-mail sender (Site Setup → Mail → sender address +
+   name, anything like `demo@example.org` works). plone.formblock 1.0.0a3
+   crashes on submit without one — even with sending disabled.
 1. <http://localhost:3000> → log in (admin/admin).
 2. Add a page → add a **Form** block and define some fields. In the block
    sidebar:
