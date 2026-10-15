@@ -1,0 +1,57 @@
+---
+# Try-out stack for sqlastack-formstore with plone.formblock:
+# PostgreSQL + Plone backend. sqlastack-formstore is installed from Test PyPI
+# (current dev release) at container start, plone.formblock from PyPI —
+# no local build needed. Frontend: see frontend/ and the README.
+#
+# Ports are offset from example/ (db 5434, backend 8081) so both try-out
+# stacks can run side by side.
+#
+#   docker compose up -d
+#   -> backend on http://localhost:8081 (site "Plone", admin/admin)
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: formstore
+      POSTGRES_PASSWORD: formstore
+      POSTGRES_DB: formstore
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "formstore"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    image: plone/plone-backend:6.2.2
+    environment:
+      ADDONS: "sqlastack-formstore psycopg[binary]"
+      PIP_PARAMS: "--extra-index-url https://test.pypi.org/simple/"
+      SQLASTACK_FORMS_URL: "postgresql+psycopg://formstore:formstore@db:5432/formstore"
+    command: /app/bin/sqlastack-formstore-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: plone/plone-backend:6.2.2
+    environment:
+      SITE: Plone
+      TYPE: volto
+      # ohne mindestens eine CORS_-Variable generiert das Image KEINE CORS-Policy
+      CORS_ALLOW_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000"
+      # z3c.jbot: von plone.formblock 1.0.0a3 benutzt, aber nicht deklariert
+      ADDONS: "plone.formblock z3c.jbot sqlastack-formstore psycopg[binary]"
+      PROFILES: "plone.formblock:default,sqlastack.formstore:default"
+      PIP_PARAMS: "--extra-index-url https://test.pypi.org/simple/"
+      SQLASTACK_FORMS_URL: "postgresql+psycopg://formstore:formstore@db:5432/formstore"
+    ports:
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
