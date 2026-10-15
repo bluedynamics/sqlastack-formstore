@@ -1,7 +1,7 @@
 [project]
 name = "sqlastack-formstore"
 dynamic = ["version"]
-description = "Generic SQL form storage for Plone/Volto: IFormDataStore adapter for collective.volto.formsupport, storing submissions as JSONB."
+description = "Generic SQL form storage for Plone/Volto: IFormDataStore adapters for collective.volto.formsupport and plone.formblock, storing submissions as JSONB."
 readme = "README.md"
 authors = [
     {name = "Jens Klein", email = "jk@kleinundpartner.at"},
@@ -41,15 +41,23 @@ test-plone = [
     "plone.app.testing",
     "pytest-plone>=1.1.0",
 ]
+test-plone-formblock = [
+    "sqlastack-formstore[test]",
+    "plone.formblock[test]>=1.0.0a3",
+    "Products.CMFPlone",
+    "plone.app.testing",
+    "pytest-plone>=1.1.0",
+]
 develop = ["sqlastack-formstore[test]", "pdbp"]
 plone = ["collective.volto.formsupport"]
+formblock = ["plone.formblock"]
 
 [build-system]
 requires = ["hatchling>=1.26", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["example/"]
+exclude = ["example/", "example-formblock/"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sqlastack"]

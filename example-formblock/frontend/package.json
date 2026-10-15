@@ -1,0 +1,43 @@
+{
+  "name": "formstore-formblock-demo",
+  "version": "1.0.0",
+  "description": "Volto frontend for trying out sqlastack-formstore with @plone/volto-form-block",
+  "private": true,
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "start": "pnpm build:deps && VOLTOCONFIG=$(pwd)/volto.config.js pnpm --filter @plone/volto start",
+    "build:deps": "pnpm --filter @plone/registry --filter @plone/components build"
+  },
+  "dependencies": {
+    "@plone/volto": "workspace:*",
+    "@plone/registry": "workspace:*",
+    "@plone/volto-form-block": "1.0.0-alpha.3"
+  },
+  "devDependencies": {
+    "mrs-developer": "^2.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+      "react-refresh": "^0.14.2"
+    },
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher"
+    ],
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "core-js",
+      "core-js-pure",
+      "cypress",
+      "es5-ext",
+      "esbuild",
+      "lightningcss-cli",
+      "unrs-resolver"
+    ],
+    "patchedDependencies": {
+      "react-dev-utils@12.0.1": "core/patches/react-dev-utils@12.0.1.patch",
+      "http-proxy@1.18.1": "core/patches/http-proxy@1.18.1.patch"
+    }
+  },
+  "packageManager": "pnpm@10.33.0"
+}

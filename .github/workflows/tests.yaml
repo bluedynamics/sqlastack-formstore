@@ -136,10 +136,72 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
 
+  test-plone-formblock:
+    name: Plone integration plone.formblock (3.13)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sqlastack-formstore
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sqlastack
+          POSTGRES_PASSWORD: sqlastack
+          POSTGRES_DB: sqlastack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sqlastack"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      SQLASTACK_TEST_PG_URL: "postgresql+psycopg://sqlastack:sqlastack@localhost:5432/sqlastack_test"
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: sqlastack-formstore
+          fetch-depth: 0
+
+      - uses: actions/checkout@v6
+        with:
+          repository: bluedynamics/sqlastack-core
+          path: sqlastack-core
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "sqlastack-formstore/pyproject.toml"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies (Plone stack with plone.formblock)
+        run: uv sync --extra test --extra test-plone-formblock
+
+      - name: Run plone.formblock integration tests with coverage
+        run: uv run pytest tests_plone_formblock/ --cov --cov-report=
+
+      - name: Rename coverage data
+        run: mv .coverage .coverage.plone-formblock
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-data-plone-formblock
+          path: sqlastack-formstore/.coverage.plone-formblock
+          include-hidden-files: true
+          if-no-files-found: ignore
+
   coverage:
     name: Combine & check coverage
     if: always()
-    needs: [test, test-plone]
+    needs: [test, test-plone, test-plone-formblock]
     runs-on: ubuntu-latest
     defaults:
       run:
