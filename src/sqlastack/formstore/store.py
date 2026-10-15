@@ -1,10 +1,15 @@
-"""IFormDataStore adapter storing submissions in SQL (JSONB).
+"""IFormDataStore adapters storing submissions in SQL (JSONB).
 
-This module imports NOTHING from collective.volto.formsupport or Plone: the
-adapter's ``provides``/``for`` are declared purely in configure.zcml, so the
-package stays importable (and testable) without the Plone stack. The de-facto
-store contract (add/search/length/delete/clear; records with ``.attrs`` and
-``.intid``) was verified against formsupport source on 2026-09-18 (spec §3).
+This module imports NOTHING from collective.volto.formsupport, plone.formblock
+or Plone: the adapters' ``provides``/``for`` are declared purely in
+configure.zcml, so the package stays importable (and testable) without the
+Plone stack. The de-facto store contract (add/search/length/delete/clear;
+records with ``.attrs`` and ``.intid``) was verified against formsupport
+3.3.2 source on 2026-09-18 (spec §3) and against plone.formblock 1.0.0a3
+source on 2026-10-15.
+
+``SQLFormDataStoreBase`` holds the shared plumbing; the formsupport adapter
+lives here, the plone.formblock adapter in ``store_formblock``.
 """
 
 from __future__ import annotations
@@ -43,29 +48,43 @@ def _flat_blocks(context) -> dict:
 class SQLRecord:
     """souper-Record duck type: ``.attrs`` mapping + ``.intid``.
 
-    ``attrs["date"]`` is NAIVE local time on purpose: formsupport's expiry
-    check compares it against ``datetime.now()`` (spec §3).
+    ``attrs["date"]`` is NAIVE local time on purpose: both consumers' expiry
+    checks compare it against ``datetime.now()`` (spec §3).
+
+    ``include_types`` exists because the consumers differ: formsupport skips
+    ``fields_types`` when expanding records, plone.formblock does not and
+    would render it as a form field.
     """
 
     __slots__ = ("attrs", "intid")
 
-    def __init__(self, entry: FormEntry) -> None:
+    def __init__(self, entry: FormEntry, *, include_types: bool = True) -> None:
         attrs = dict(entry.data)
         attrs["fields_labels"] = dict(entry.fields_labels)
         attrs["fields_order"] = list(entry.fields_order)
-        attrs["fields_types"] = dict(entry.fields_types)
+        if include_types:
+            attrs["fields_types"] = dict(entry.fields_types)
         attrs["block_id"] = entry.block_id
         attrs["date"] = entry.created_at.astimezone().replace(tzinfo=None)
         self.attrs = attrs
         self.intid = entry.id
 
 
-class SQLFormDataStore:
+class SQLFormDataStoreBase:
     """Store form submissions in the ``forms`` database.
 
     Sessions come from the process-wide registry's shared Zope session; the
-    Zope transaction manager commits/aborts — this adapter never commits.
+    Zope transaction manager commits/aborts — these adapters never commit.
+
+    Subclasses set ``block_type`` and map their block's field definitions via
+    ``_field_specs()``; everything else (contract methods, scoping by the
+    context UID) is shared.
     """
+
+    #: ``@type`` of the form block this adapter is responsible for.
+    block_type: str = ""
+    #: whether records expose ``fields_types`` in their attrs (see SQLRecord).
+    record_includes_types: bool = True
 
     def __init__(self, context, request) -> None:
         self.context = context
@@ -95,17 +114,19 @@ class SQLFormDataStore:
     def block_id(self) -> str:
         return self._request_data().get("block_id", "")
 
-    def _form_fields(self) -> list[dict]:
+    def _block(self) -> dict:
         block = _flat_blocks(self.context).get(self.block_id) or {}
-        if block.get("@type") != "form":
-            return []
-        form_block = copy.deepcopy(block)
-        subblocks = form_block.get("subblocks", [])
-        for index, field in enumerate(subblocks):
-            custom = form_block.get(field.get("field_id", ""))
-            if custom:
-                subblocks[index]["custom_field_id"] = custom
-        return subblocks
+        if block.get("@type") != self.block_type:
+            return {}
+        return block
+
+    def _field_specs(self) -> dict[str, dict]:
+        """Map field_id -> {"label", "type", "attachment"} for the block.
+
+        Empty mapping = block missing, of a foreign type, or without fields;
+        ``add()`` then refuses the submission.
+        """
+        raise NotImplementedError
 
     def _current_userid(self) -> str | None:
         """Login of the authenticated user; None = anonymous.
@@ -128,21 +149,15 @@ class SQLFormDataStore:
     # -- store contract (spec §3) -----------------------------------------
 
     def add(self, data) -> int | None:
-        form_fields = self._form_fields()
-        if not form_fields:
+        fields = self._field_specs()
+        if not fields:
             logger.error(
-                "Block %r of type 'form' not found on %s",
+                "Block %r of type %r not found on %s",
                 self.block_id,
+                self.block_type,
                 self.context.absolute_url(),
             )
             return None
-        fields = {
-            f["field_id"]: {
-                "label": f.get("custom_field_id", f.get("label", f["field_id"])),
-                "type": f.get("field_type", "text"),
-            }
-            for f in form_fields
-        }
         payload: dict = {}
         labels: dict = {}
         types: dict = {}
@@ -152,7 +167,7 @@ class SQLFormDataStore:
             if field_id not in fields:
                 continue
             field = fields[field_id]
-            if field["type"] == "attachment":
+            if field["attachment"]:
                 logger.warning(
                     "Skipping attachment field %r: file attachments are not "
                     "stored by sqlastack.formstore (yet)",
@@ -178,7 +193,10 @@ class SQLFormDataStore:
 
     def search(self, query=None) -> list[SQLRecord]:
         entries = self._repository().list_for(self.context.UID())
-        return [SQLRecord(entry) for entry in entries]
+        return [
+            SQLRecord(entry, include_types=self.record_includes_types)
+            for entry in entries
+        ]
 
     def length(self) -> int:
         return self._repository().count_for(self.context.UID())
@@ -188,3 +206,25 @@ class SQLFormDataStore:
 
     def clear(self) -> None:
         self._repository().clear_for(self.context.UID())
+
+
+class SQLFormDataStore(SQLFormDataStoreBase):
+    """Adapter for collective.volto.formsupport's ``form`` blocks."""
+
+    block_type = "form"
+
+    def _field_specs(self) -> dict[str, dict]:
+        block = self._block()
+        specs: dict[str, dict] = {}
+        for field in block.get("subblocks", []):
+            field_id = field.get("field_id", "")
+            if not field_id:
+                continue
+            field_type = field.get("field_type", "text")
+            specs[field_id] = {
+                # a block entry keyed by the field id is a custom label
+                "label": block.get(field_id) or field.get("label", field_id),
+                "type": field_type,
+                "attachment": field_type == "attachment",
+            }
+        return specs

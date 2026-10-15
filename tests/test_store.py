@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from sqlastack.formstore.store import SQLFormDataStore
 from sqlastack.plone import get_registry
-from sqlastack.plone import reset_registry
 import datetime
 import json
 import pytest
@@ -50,15 +49,6 @@ class FakeRequest(dict):
         self.form: dict = {}
         if body is not None:
             self["BODY"] = json.dumps(body)
-
-
-@pytest.fixture
-def forms_env(pg_url, pg_engine, monkeypatch):
-    monkeypatch.setenv("SQLASTACK_FORMS_URL", pg_url)
-    reset_registry()
-    yield
-    transaction.abort()
-    reset_registry()
 
 
 @pytest.fixture

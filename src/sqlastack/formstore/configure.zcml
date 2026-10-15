@@ -8,7 +8,7 @@
       name="default"
       title="sqlastack.formstore"
       directory="profiles/default"
-      description="Store collective.volto.formsupport submissions in SQL (JSONB)."
+      description="Store Volto form submissions (collective.volto.formsupport or plone.formblock) in SQL (JSONB)."
       provides="Products.GenericSetup.interfaces.EXTENSION"
       />
 
@@ -18,6 +18,14 @@
       for="plone.dexterity.interfaces.IDexterityContent
            .interfaces.ISqlastackFormstoreLayer"
       zcml:condition="installed collective.volto.formsupport"
+      />
+
+  <adapter
+      factory=".store_formblock.FormBlockDataStore"
+      provides="plone.formblock.interfaces.IFormDataStore"
+      for="plone.dexterity.interfaces.IDexterityContent
+           .interfaces.ISqlastackFormstoreLayer"
+      zcml:condition="installed plone.formblock"
       />
 
   <subscriber
